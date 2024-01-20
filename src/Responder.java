@@ -5,6 +5,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,13 +14,28 @@ public class Responder extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         String defMess = "I'm sorry, I haven't understood the message you send";
 
-        Long chatId = update.getMessage().getChatId();
+        Long chatId = 0L;
 
         SendMessage botMessage = new SendMessage();
-        botMessage.setChatId(chatId);
         botMessage.setText(defMess);
 
+        if(update.hasCallbackQuery() && update.getCallbackQuery().getData() != null && !update.getCallbackQuery().getData().isEmpty()){
+            chatId = update.getCallbackQuery().getMessage().getChatId();
+
+            String callBackData = update.getCallbackQuery().getData();
+
+            if(callBackData.equalsIgnoreCase(CallBackData.CD_YES.toString())){
+                botMessage.setText(String.valueOf(LocalDateTime.now()));
+
+            }
+
+            if (callBackData.equalsIgnoreCase(CallBackData.CD_NO.toString())){
+                botMessage.setText("Ok, No problem");
+            }
+        }
+
         if (update.hasMessage() && update.getMessage().hasText()) {
+            chatId = update.getMessage().getChatId();
             String userMessage = update.getMessage().getText().trim().toLowerCase();
             if (userMessage.equalsIgnoreCase("hello")) {
                 botMessage.setText("Hello " + update.getMessage().getFrom().getFirstName() + "\nHow are you ?");
@@ -38,9 +54,14 @@ public class Responder extends TelegramLongPollingBot {
 
                 InlineKeyboardButton yesButton = new InlineKeyboardButton();
                 yesButton.setText("Yes");
-                yesButton.setCallbackData("/YES");
+                yesButton.setCallbackData(CallBackData.CD_YES.toString());
+
+                InlineKeyboardButton noButton = new InlineKeyboardButton();
+                noButton.setText("No thanks");
+                noButton.setCallbackData(CallBackData.CD_NO.toString());
 
                 row1.add(yesButton);
+                row1.add(noButton);
                 buttonsBoard.add(row1);
 
                 keyboardMarkup.setKeyboard(buttonsBoard);
@@ -50,6 +71,12 @@ public class Responder extends TelegramLongPollingBot {
             }
         }
 
+
+        if (chatId == 0){
+            throw new IllegalStateException("The chat id couldn't be identified or found");
+        }
+
+        botMessage.setChatId(chatId);
 
         try {
             sendApiMethod(botMessage);
