@@ -44,7 +44,7 @@ public class Responder extends TelegramLongPollingBot {
                 botMessage.setText("I'm fine, thanks for asking");
             }
 
-            if (userMessage.contains("time")) {
+            if (userMessage.contains("time")||userMessage.contains("/time")) {
                 botMessage.setText("Would you like to know the current time?");
 
                 InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
@@ -68,6 +68,10 @@ public class Responder extends TelegramLongPollingBot {
 
                 botMessage.setReplyMarkup(keyboardMarkup);
 
+            }
+
+            if(userMessage.equalsIgnoreCase("/day")){
+                botMessage.setText(LocalDateTime.now().getDayOfWeek().toString());
             }
         }
 
